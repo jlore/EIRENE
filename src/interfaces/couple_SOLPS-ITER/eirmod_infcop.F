@@ -357,6 +357,8 @@ C
 C
 C READING BLOCK 14 FROM FORMATTED INPUT FILE (IUNIN) FINISHED
 C
+      IF (.NOT.LSHORT.AND.ITIMV.LE.1) CALL EIRENE_CHECK_BLOCK14_VS_3A
+C
 C
 C DEFINE ADDITIONAL TALLIES FOR COUPLING (UPDATED IN SUBR. UPTCOP
 C                                             AND IN SUBR. COLLIDE)
@@ -1911,6 +1913,54 @@ C
        RETURN
        END SUBROUTINE EIRENE_READ14_JSON
 #endif
+
+      SUBROUTINE EIRENE_CHECK_BLOCK14_VS_3A
+C  Independent cross-check: does each Block-14 (recycling source /
+C  target) entry's fixed radial-or-poloidal index (NDT) actually match
+C  a Block-3A (non-default standard surface, IRPTA/IRPTE) declaration
+C  covering its free-dimension range (NTIN,NTEN)?
+C  A Block-14 entry's [NTIN,NTEN] range need not equal a
+C  Block-3A surface's full extent -- one physical surface may be split
+C  into several strata -- so this only requires the range to be a
+C  SUBSET of some surface's range, not an exact match.
+      IMPLICIT NONE
+      INTEGER IT, IPRT, ISTS, IDIM_FREE, IDIM_FIX
+      LOGICAL FOUND
+
+      DO IT = 1, NTARGI
+        DO IPRT = 1, NTGPRT(IT)
+          IF (NIXY(IT,IPRT).EQ.1) THEN
+            IDIM_FREE = 1
+            IDIM_FIX  = 2
+          ELSE
+            IDIM_FREE = 2
+            IDIM_FIX  = 1
+          ENDIF
+          FOUND = .FALSE.
+          DO ISTS = 1, NSTSI
+C  NDT is 0-indexed while Block-3A's IRPTA/IRPTE fixed-dimension value
+C  is 1-indexed for the same physical surface position -- confirmed
+C  empirically across every target in ITER_2360_0.95He+0.05H_40MW
+C  (NDT always exactly one less than IRPTA/IRPTE) and consistent with
+C  the ADITYA conformal_limiter case's known-working state
+C  (NDT=10 pairs with the corrected IRPTA1=11).
+            IF (NTIN(IT,IPRT).GE.IRPTA(ISTS,IDIM_FREE) .AND.
+     .          NTEN(IT,IPRT).LE.IRPTE(ISTS,IDIM_FREE) .AND.
+     .          NDT(IT,IPRT)+1.EQ.IRPTA(ISTS,IDIM_FIX)) THEN
+              FOUND = .TRUE.
+            ENDIF
+          END DO
+          IF (.NOT.FOUND) THEN
+            WRITE (iunout,*) 'ERROR: BLOCK 14 ENTRY DOES NOT MATCH',
+     .        ' ANY BLOCK 3A NON-DEFAULT STANDARD SURFACE'
+            WRITE (iunout,*) 'ITARG,IPRT,NDT,NTIN,NTEN ',
+     .        IT,IPRT,NDT(IT,IPRT),NTIN(IT,IPRT),NTEN(IT,IPRT)
+            CALL EIRENE_EXIT_OWN(1)
+          ENDIF
+        END DO
+      END DO
+      RETURN
+      END SUBROUTINE EIRENE_CHECK_BLOCK14_VS_3A
 
       END SUBROUTINE EIRENE_IF0COP
 C
