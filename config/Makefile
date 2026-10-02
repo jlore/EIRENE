@@ -673,25 +673,21 @@ ${SRCLOCAL}/eirlocal.f:
 	echo "c" >> ${SRCLOCAL}/eirlocal.f
 	echo "      end" >> ${SRCLOCAL}/eirlocal.f
 
-links: ${SRCEIR}/Database/AMJUEL ${SRCEIR}/Database/AMMONX ${SRCEIR}/Database/H2VIBR ${SRCEIR}/Database/HYDHEL ${SRCEIR}/Database/METHANE ${SRCEIR}/Database/METHAN
+# Refresh these generated aliases on every invocation.  Relative link targets
+# remain valid when a complete SOLPS checkout is copied or renamed.
+EIRENE_DATABASE_SOURCES = ${SRCEIR}/Database/AMdata/amjuel.tex \
+                          ${SRCEIR}/Database/AMdata/AMMONX_Arrh-elast.tex \
+                          ${SRCEIR}/Database/AMdata/h2vibr.tex \
+                          ${SRCEIR}/Database/AMdata/hydhel.tex \
+                          ${SRCEIR}/Database/AMdata/methane.tex
 
-${SRCEIR}/Database/AMJUEL:
-	-ln -s ${SRCEIR}/Database/AMdata/amjuel.tex ${SRCEIR}/Database/AMJUEL
-
-${SRCEIR}/Database/AMMONX:
-	-ln -s ${SRCEIR}/Database/AMdata/AMMONX_Arrh-elast.tex ${SRCEIR}/Database/AMMONX
-
-${SRCEIR}/Database/H2VIBR:
-	-ln -s ${SRCEIR}/Database/AMdata/h2vibr.tex ${SRCEIR}/Database/H2VIBR
-
-${SRCEIR}/Database/HYDHEL:
-	-ln -s ${SRCEIR}/Database/AMdata/hydhel.tex ${SRCEIR}/Database/HYDHEL
-
-${SRCEIR}/Database/METHANE:
-	-ln -s ${SRCEIR}/Database/AMdata/methane.tex ${SRCEIR}/Database/METHANE
-
-${SRCEIR}/Database/METHAN: ${SRCEIR}/Database/METHANE
-	-ln -s ${SRCEIR}/Database/METHANE ${SRCEIR}/Database/METHAN
+links: ${EIRENE_DATABASE_SOURCES}
+	ln -sfn AMdata/amjuel.tex ${SRCEIR}/Database/AMJUEL
+	ln -sfn AMdata/AMMONX_Arrh-elast.tex ${SRCEIR}/Database/AMMONX
+	ln -sfn AMdata/h2vibr.tex ${SRCEIR}/Database/H2VIBR
+	ln -sfn AMdata/hydhel.tex ${SRCEIR}/Database/HYDHEL
+	ln -sfn AMdata/methane.tex ${SRCEIR}/Database/METHANE
+	ln -sfn METHANE ${SRCEIR}/Database/METHAN
 
 ${OBJDIR}/mpiversion.mk: ${MAKES} | $(OBJDIR)
 ifdef NO_MPI
